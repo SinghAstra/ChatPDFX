@@ -7,12 +7,12 @@
 The Social Media Platform project is a full-stack web application designed to serve as a social media platform where users can create posts, like and comment on posts, and interact with other users. The project incorporates various features including authentication, post creation, post editing, post deletion, liking posts, and searching for posts by title and tags.
 
 ## Built With
-* [![React][React.js]][React-url]
-* [![Redux][Redux]][Redux-url]
-* [![NodeJS][NodeJS]][NodeJS-url]
-* [![Express.js][ExpressJS]][ExpressJS-url]
-* [![MongoDB][MongoDB]][MongoDB-url]
-* [![JWT][JWT]][JWT-url]
+[![React][React.js]][React-url]
+[![Redux][Redux]][Redux-url]
+[![NodeJS][NodeJS]][NodeJS-url]
+[![Express.js][ExpressJS]][ExpressJS-url]
+[![MongoDB][MongoDB]][MongoDB-url]
+[![JWT][JWT]][JWT-url]
 
 ## Features
 - User authentication: Users can sign up, log in, and log out.
