@@ -1,4 +1,10 @@
 # Social Media Web Application
+[![Contributors][contributors-shield]][https://github.com/SinghAstra/Social-Media-Web-App/graphs/contributors]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
 ## Description
 The Social Media Platform project is a full-stack web application designed to serve as a social media platform where users can create posts, like and comment on posts, and interact with other users. The project incorporates various features including authentication, post creation, post editing, post deletion, liking posts, and searching for posts by title and tags.
