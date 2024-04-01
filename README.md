@@ -6,6 +6,9 @@
 # Social Media Web Application
 The Social Media Platform project is a full-stack web application designed to serve as a social media platform where users can create posts, like and comment on posts, and interact with other users. The project incorporates various features including authentication, post creation, post editing, post deletion, liking posts, and searching for posts by title and tags.
 
+<iframe src="https://giphy.com/embed/l1J9IFcDSYcAeHH5m" width="480" height="266" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p>
+<a href="https://giphy.com/gifs/orchfilms-f-the-prom-l1J9IFcDSYcAeHH5m">Social Media WebApp</a></p>
+
 ## Built With
 [![React][React.js]][React-url]
 [![Redux][Redux]][Redux-url]
