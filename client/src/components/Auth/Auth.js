@@ -96,6 +96,8 @@ const Auth = () => {
         <TextField
           size="small"
           fullWidth
+          type="email"
+          autoComplete="off"
           id="email"
           label="Email"
           variant="outlined"
@@ -109,8 +111,10 @@ const Auth = () => {
         {/* Password Field */}
         <TextField
           size="small"
+          type="password"
           fullWidth
           id="password"
+          autoComplete="off"
           label="Password"
           variant="outlined"
           name="password"

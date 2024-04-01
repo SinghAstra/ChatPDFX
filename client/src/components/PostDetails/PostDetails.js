@@ -1,6 +1,5 @@
 import { CircularProgress, Divider, Paper, Typography } from "@mui/material";
 import React, { useEffect } from "react";
-import useStyles from "./styles";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPostBySearch, getPost } from "../../actions/post";
@@ -9,7 +8,6 @@ import CommentSection from "../Comment/CommentSection";
 
 const PostDetails = () => {
   const { post, posts, isLoading } = useSelector((state) => state.posts);
-  const classes = useStyles();
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -26,7 +24,17 @@ const PostDetails = () => {
 
   if (isLoading) {
     return (
-      <Paper elevation={6} className={classes.loadingPaper}>
+      <Paper
+        elevation={6}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "20px",
+          borderRadius: "15px",
+          height: "39vh",
+        }}
+      >
         <CircularProgress size="7em" />
       </Paper>
     );
@@ -47,8 +55,13 @@ const PostDetails = () => {
       style={{ padding: "20px", borderRadius: "15px", margin: "8px" }}
       elevation={6}
     >
-      <div className={classes.card}>
-        <div className={classes.section}>
+      <div
+        sx={{
+          display: "flex",
+          width: "100%",
+        }}
+      >
+        <div sx={{ borderRadius: "20px", margin: "10px", flex: 1 }}>
           <Typography variant="h3" component="h2">
             {post.title}
           </Typography>
@@ -75,9 +88,14 @@ const PostDetails = () => {
           <CommentSection post={post} />
           <Divider style={{ margin: "20px 0" }} />
         </div>
-        <div className={classes.imageSection}>
+        <div sx={{ marginLeft: "20px" }}>
           <img
-            className={classes.media}
+            sx={{
+              borderRadius: "20px",
+              objectFit: "cover",
+              width: "100%",
+              maxHeight: "600px",
+            }}
             src={
               post.selectedFile ||
               "https://user-images.githubusercontent.com/194400/49531010-48dad180-f8b1-11e8-8d89-1e61320e1d82.png"
@@ -88,12 +106,12 @@ const PostDetails = () => {
       </div>
 
       {!!recommendedPosts.length && (
-        <div className={classes.section}>
+        <div sx={{ borderRadius: "20px", margin: "10px", flex: 1 }}>
           <Typography gutterBottom variant="h5">
             You might also like:
           </Typography>
           <Divider />
-          <div className={classes.recommendedPosts}>
+          <div sx={{ display: "flex" }}>
             {recommendedPosts.map(
               ({ title, name, message, likes, selectedFile, _id }) => (
                 <div
@@ -120,7 +138,7 @@ const PostDetails = () => {
                   <Typography gutterBottom variant="subtitle1">
                     Likes: {likes.length}
                   </Typography>
-                  <img src={selectedFile} width="200px" />
+                  <img src={selectedFile} width="200px" alt="selected-file" />
                 </div>
               )
             )}
