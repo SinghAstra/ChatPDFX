@@ -1,1 +1,1 @@
-# <p align="center"> Social Media Web Application </p>
+ <h1 align="center"> Social Media Web Application </h1>
