@@ -5,7 +5,7 @@
 
 # Social Media Web Application
 <div align="center">
-  [![Social Media Web Application](https://github.com/SinghAstra/Social-Media-WebApp/blob/main/images/social-media.png)](https://social-media-mern-webapp.netlify.app/)
+  [![Social Media Web Application][Social-Media-WebApp-Logo]][Social-Media-WebApp]
 </div>
 The Social Media Platform project is a full-stack web application designed to serve as a social media platform where users can create posts, like and comment on posts, and interact with other users. The project incorporates various features including authentication, post creation, post editing, post deletion, liking posts, and searching for posts by title and tags.
 
@@ -62,6 +62,8 @@ The Social Media Platform project is a full-stack web application designed to se
 [MongoDB-url]:https://www.mongodb.com/
 [JWT]:https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens
 [JWT-url]:https://jwt.io/
+[Social-Media-WebApp-Logo]:https://github.com/SinghAstra/Social-Media-WebApp/blob/main/images/social-media.png
+[Social-Media-WebApp]:https://social-media-mern-webapp.netlify.app/
 
 
 
