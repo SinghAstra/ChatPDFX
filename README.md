@@ -7,9 +7,6 @@
 <div align="center">
   <a href="https://social-media-mern-webapp.netlify.app/"><img src="https://github.com/SinghAstra/Social-Media-WebApp/blob/main/images/social-media.png"/></a>
 </div>
-The Social Media Platform project is a full-stack web application designed to serve as a social media platform where users can create posts, like and comment on posts, and interact with other users. The project incorporates various features including authentication, post creation, post editing, post deletion, liking posts, and searching for posts by title and tags.
-
-
 
 ## Features
 - User authentication: Users can sign up, log in, and log out.
