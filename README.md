@@ -6,24 +6,15 @@
 # Social Media Web Application
 The Social Media Platform project is a full-stack web application designed to serve as a social media platform where users can create posts, like and comment on posts, and interact with other users. The project incorporates various features including authentication, post creation, post editing, post deletion, liking posts, and searching for posts by title and tags.
 
-<div class="tenor-gif-embed" data-postid="12324617" data-share-method="host" data-aspect-ratio="1.245" data-width="100%"><a href="https://tenor.com/view/social-media-the-power-of-social-media-never-underestimate-gif-12324617">Social Media The Power Of Social Media GIF</a>from <a href="https://tenor.com/search/social+media-gifs">Social Media GIFs</a></div> <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
-
-## Built With
-[![React][React.js]][React-url]
-[![Redux][Redux]][Redux-url]
-[![NodeJS][NodeJS]][NodeJS-url]
-[![Express.js][ExpressJS]][ExpressJS-url]
-[![MongoDB][MongoDB]][MongoDB-url]
-[![JWT][JWT]][JWT-url]
 
 ## Features
 - User authentication: Users can sign up, log in, and log out.
 - Create, read, update, and delete (CRUD) operations for posts.
 
 ## Technologies Used
-- **Frontend**: React, Redux, Material-UI
-- **Backend**: Node.js, Express.js, MongoDB
-- **Authentication**: JSON Web Tokens (JWT)
+- **Frontend**: [![React][React.js]][React-url][![Redux][Redux]][Redux-url]
+- **Backend**: [![NodeJS][NodeJS]][NodeJS-url][![Express.js][ExpressJS]][ExpressJS-url][![MongoDB][MongoDB]][MongoDB-url]
+- **Authentication**: [![JWT][JWT]][JWT-url]
 
 ## How to Run the Project Locally:
 
