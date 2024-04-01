@@ -11,6 +11,8 @@
 ## Features
 - User authentication: Users can sign up, log in, and log out.
 - Create, read, update, and delete (CRUD) operations for posts.
+- Users can search for posts by title and tags.
+- Posts are paginated to improve the browsing experience.
 
 ## Technologies Used
 - **Frontend**: [![React][React.js]][React-url][![Redux][Redux]][Redux-url]
