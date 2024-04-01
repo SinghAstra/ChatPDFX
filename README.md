@@ -1,5 +1,5 @@
 # Social Media Web Application
-[![Contributors][contributors-shield]][https://github.com/SinghAstra/Social-Media-Web-App/graphs/contributors]
+[![Contributors][contributors-shield]][https://github.com/SinghAstra/Social-Media-WebApp/graphs/contributors]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
