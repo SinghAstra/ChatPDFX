@@ -1,5 +1,4 @@
 import Home from "./components/Home/Home";
-import Auth from "./components/Auth/Auth";
 import Navbar from "./components/Navbar/Navbar";
 import PostDetails from "./components/PostDetails/PostDetails";
 import { Routes, Route, Navigate } from "react-router-dom";
