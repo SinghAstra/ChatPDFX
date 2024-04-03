@@ -10,14 +10,16 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   const initialSignUpValues = {
-    username: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
   };
 
   const signUpValidationSchema = Yup.object().shape({
-    username: Yup.string().required("Required"),
+    firstName: Yup.string().required("Required"),
+    lastName: Yup.string().required("Required"),
     email: Yup.string().email("Invalid email address").required("Required"),
     password: Yup.string().required("Required"),
     confirmPassword: Yup.string()
@@ -60,24 +62,45 @@ const SignUp = () => {
                 className="w-4/5 flex flex-col gap-3"
                 onSubmit={handleSubmit}
               >
-                <div>
-                  <input
-                    className={`w-full h-10 bg-transparent text-white font-mono outline outline-0 focus:outline-0 border focus:border-2 text-sm px-3 py-2.5 rounded-[7px] focus:border-violet-400 ${
-                      touched.username && errors.username
-                        ? "border-red-400"
-                        : ""
-                    }`}
-                    placeholder="Username"
-                    type="text"
-                    id="username"
-                    autoComplete="off"
-                    value={values.username}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                  <p className="ml-2 text-red-400">
-                    {touched.username && errors.username}
-                  </p>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      className={`w-full h-10 bg-transparent text-white font-mono outline outline-0 focus:outline-0 border focus:border-2 text-sm px-3 py-2.5 rounded-[7px] focus:border-violet-400 ${
+                        touched.firstName && errors.firstName
+                          ? "border-red-400"
+                          : ""
+                      }`}
+                      placeholder="FirstName"
+                      type="text"
+                      id="firstName"
+                      autoComplete="off"
+                      value={values.firstName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                    <p className="ml-2 text-red-400">
+                      {touched.firstName && errors.firstName}
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      className={`w-full h-10 bg-transparent text-white font-mono outline outline-0 focus:outline-0 border focus:border-2 text-sm px-3 py-2.5 rounded-[7px] focus:border-violet-400 ${
+                        touched.lastName && errors.lastName
+                          ? "border-red-400"
+                          : ""
+                      }`}
+                      placeholder="LastName"
+                      type="text"
+                      id="lastName"
+                      autoComplete="off"
+                      value={values.lastName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                    <p className="ml-2 text-red-400">
+                      {touched.lastName && errors.lastName}
+                    </p>
+                  </div>
                 </div>
                 <div>
                   <input
