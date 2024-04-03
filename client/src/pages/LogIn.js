@@ -28,7 +28,7 @@ const LogIn = () => {
   };
 
   return (
-    <div className="flex bg-black w-full h-screen font-mono">
+    <div className="flex bg-black w-full h-full font-mono">
       <div className="flex-1 flex items-center justify-center w-full h-screen flex-col">
         <div className="w-4/5 mb-6">
           <h1 className="text-xl font-medium text-violet-400">Welcome back</h1>
@@ -109,7 +109,7 @@ const LogIn = () => {
         </div>
       </div>
       <div className="flex-1 flex justify-center items-center">
-        <img src={"/images/log-in.svg"} alt="Log In" />
+        <img src={"/images/log-in.png"} alt="Log In" />
       </div>
     </div>
   );

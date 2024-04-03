@@ -10,6 +10,7 @@ import Notification from "./components/Notification/Notification";
 import { hideNotification } from "./actions/notifications";
 import LogIn from "./pages/LogIn";
 import SignUp from "./pages/SignUp";
+import Profile from "./pages/Profile";
 
 function App() {
   const { open, message, severity } = useSelector(
@@ -23,7 +24,7 @@ function App() {
   const dispatch = useDispatch();
 
   return (
-    <ThemeProvider theme={theme}>
+    <div className="">
       <Navbar />
       <Routes>
         <Route exact path="/" element={<Navigate to="/posts" />} />
@@ -32,6 +33,18 @@ function App() {
         <Route exact path="/posts/:id" element={<PostDetails />} />
         <Route exact path="/log-in" element={<LogIn />} />
         <Route exact path="/sign-up" element={<SignUp />} />
+        <Route exact path="/profile" element={<Profile />} />
+        {!user && (
+          <>
+            <Route exact path="/log-in" element={<LogIn />} />
+            <Route exact path="/sign-up" element={<SignUp />} />
+          </>
+        )}
+        <Route
+          exact
+          path="/profile"
+          element={user ? <Profile /> : <Navigate to="log-in" />}
+        />
       </Routes>
       <Notification
         open={open}
@@ -41,7 +54,7 @@ function App() {
         message={message}
         severity={severity}
       />
-    </ThemeProvider>
+    </div>
   );
 }
 

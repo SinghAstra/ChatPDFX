@@ -64,7 +64,7 @@ const UnauthorizedUserMessage = () => {
 // Main Form component
 export default function Form({ currentId, setCurrentId }) {
   // Retrieve user and posts data from Redux store
-  const user = useSelector((state) => state.auth.authState);
+  const user = useSelector((state) => state.auth.user);
   const posts = useSelector((state) => state.posts.posts);
 
   // State for tracking selected file name
