@@ -8,6 +8,8 @@ import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 import Notification from "./components/Notification/Notification";
 import { hideNotification } from "./actions/notifications";
+import LogIn from "./pages/LogIn";
+import SignUp from "./pages/SignUp";
 
 function App() {
   const { open, message, severity } = useSelector(
@@ -28,11 +30,8 @@ function App() {
         <Route exact path="/posts" element={<Home />} />
         <Route exact path="/posts/search" element={<Home />} />
         <Route exact path="/posts/:id" element={<PostDetails />} />
-        <Route
-          exact
-          path="/auth"
-          element={user ? <Navigate to="/posts" /> : <Auth />}
-        />
+        <Route exact path="/log-in" element={<LogIn />} />
+        <Route exact path="/sign-up" element={<SignUp />} />
       </Routes>
       <Notification
         open={open}

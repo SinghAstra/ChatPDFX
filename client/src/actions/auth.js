@@ -62,13 +62,12 @@ export const signUp = (formData, navigate) => {
 };
 
 // Action creator for user log-out
-export const logOut = (setUser) => {
+export const logOut = () => {
   return async function (dispatch) {
     try {
       // Clear local storage, dispatch LOG_OUT action, and reset user state
       localStorage.clear();
       dispatch({ type: LOG_OUT });
-      setUser(null);
     } catch (error) {
       // Log any errors that occur during log-out
       console.log("error in logOutUser is ", error);
