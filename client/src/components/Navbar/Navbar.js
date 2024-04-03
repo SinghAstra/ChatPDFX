@@ -41,7 +41,7 @@ const Navbar = () => {
         {user ? (
           <Link className="avatar placeholder" to="/app/profile">
             <div className="bg-neutral text-neutral-content rounded-full w-12 border-2 border-purple-400">
-              <span className="text-2xl">{user.username[0]}</span>
+              <span className="text-2xl">{user.name[0]}</span>
             </div>
           </Link>
         ) : (
