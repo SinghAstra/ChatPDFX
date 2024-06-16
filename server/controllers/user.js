@@ -1,9 +1,9 @@
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const User = require("../models/user");
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 // Function to handle user sign-in
-const signIn = async (req, res) => {
+export const signIn = async (req, res) => {
   try {
     // Extract email and password from the request body
     const { email, password } = req.body;
@@ -47,7 +47,7 @@ const signIn = async (req, res) => {
 };
 
 // Function to handle user sign-up
-const signUp = async (req, res) => {
+export const signUp = async (req, res) => {
   try {
     // Extract user details from the request body
     const { firstName, lastName, email, password } = req.body;
@@ -91,6 +91,3 @@ const signUp = async (req, res) => {
     return res.status(500).json({ message: "Internal server error." });
   }
 };
-
-// Export the functions for use in other modules
-module.exports = { signIn, signUp };
