@@ -2,6 +2,7 @@ import express from "express";
 import {
   loginUserController,
   registerUserController,
+  sendForgoPasswordOTPEmailController,
 } from "../controllers/userController.js";
 import authMiddleware from "../middleware/auth.js";
 
@@ -9,7 +10,7 @@ const router = express.Router();
 
 router.post("/register", registerUserController);
 router.post("/login", loginUserController);
-// router.post("/forgotPassword", forgotPasswordController);
+router.post("/forgotPassword", sendForgoPasswordOTPEmailController);
 // router.post("/verifyOTP", verifyOTPController);
 // router.post("/resetPassword", resetPasswordController);
 
