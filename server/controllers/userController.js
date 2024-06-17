@@ -205,3 +205,27 @@ export const resetPasswordController = async (req, res) => {
     res.status(500).json({ message: "Error resetting password" });
   }
 };
+
+export const jwTokenVerificationController = async (req, res) => {
+  try {
+    const { username } = req.user;
+
+    // Check if username is provided in the query
+    if (!username) {
+      return res.status(400).json({ message: "Username is required" });
+    }
+    // Check if user exists in the database
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Extract non-sensitive user data to return
+    const { password, ...rest } = user.toObject(); // Convert Mongoose document to plain JS object
+    const userData = Object.assign({}, rest);
+
+    res.json({ user: userData, message: "User Info fetched" });
+  } catch (error) {
+    res.status(500).json({ message: "Error while fetching user Info." });
+  }
+};

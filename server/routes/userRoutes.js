@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  jwTokenVerificationController,
   loginUserController,
   registerUserController,
   resetPasswordController,
@@ -16,7 +17,7 @@ router.post("/forgotPassword", sendForgoPasswordOTPEmailController);
 router.post("/verifyOTP", verifyOTPController);
 router.post("/resetPassword", resetPasswordController);
 
-// router.get("/", authMiddleware, tokenVerificationController);
+router.get("/", authMiddleware, jwTokenVerificationController);
 // router.get("/:userName", fetchUserController);
 
 // router.put("/updateUser", authMiddleware, updateUserController);
