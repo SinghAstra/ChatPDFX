@@ -2,17 +2,19 @@ import { faEye, faEyeSlash, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
-    password: "",
+    username: "Abhay",
+    password: "Abhay@codeman123456",
   });
+  const { handleLogIn } = useContext(AuthContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,7 +69,7 @@ const Login = () => {
           }
         );
         localStorage.setItem("token", response.data.token);
-        // handleLogIn(response.data.token);
+        handleLogIn(response.data.token);
         toast.success(response.data.message);
       } catch (error) {
         toast.error(error.response.data.message);

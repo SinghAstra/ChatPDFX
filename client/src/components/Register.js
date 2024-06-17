@@ -7,9 +7,10 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import "./Login/Login.css";
 
 const Register = () => {
@@ -22,6 +23,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   });
+  const { handleLogIn } = useContext(AuthContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -117,7 +119,7 @@ const Register = () => {
           formData
         );
         toast.success(response.data.message);
-        // handleLogIn(response.data.token);
+        handleLogIn(response.data.token);
       } catch (error) {
         toast.error(error.response.data.message);
       }
