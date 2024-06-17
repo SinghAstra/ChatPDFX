@@ -108,7 +108,7 @@ const Login = () => {
           <label>
             <input type="checkbox" /> Remember me ?{" "}
           </label>
-          <Link to="#" className="hover:underline">
+          <Link to="/recovery" className="hover:underline">
             Forgot Password
           </Link>
         </div>
