@@ -1,8 +1,6 @@
 import express from "express";
 import {
-  //   fetchUserController,
-  //   forgotPasswordController,
-  //   loginUserController,
+  loginUserController,
   registerUserController,
 } from "../controllers/userController.js";
 import authMiddleware from "../middleware/auth.js";
@@ -10,7 +8,7 @@ import authMiddleware from "../middleware/auth.js";
 const router = express.Router();
 
 router.post("/register", registerUserController);
-// router.post("/login", loginUserController);
+router.post("/login", loginUserController);
 // router.post("/forgotPassword", forgotPasswordController);
 // router.post("/verifyOTP", verifyOTPController);
 // router.post("/resetPassword", resetPasswordController);

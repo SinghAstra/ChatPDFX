@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { validateEmail, validatePassword } from "../utils/validation.js";
 
 export const registerUserController = async (req, res) => {
   const { username, password, profile, email } = req.body;
@@ -68,5 +69,45 @@ export const registerUserController = async (req, res) => {
     res.status(201).json({ message: "User registered successfully.", token });
   } catch (error) {
     res.status(500).json({ message: "Error while Registering User." });
+  }
+};
+
+export const loginUserController = async (req, res) => {
+  const { username, password } = req.body;
+
+  // Check for missing credentials
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username and password are required" });
+  }
+
+  try {
+    // Check if user exists in the database
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Compare password using bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Incorrect password" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    res.json({
+      message: "LoggedIn successfully",
+      username: user.username,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error while Logging in user." });
   }
 };
