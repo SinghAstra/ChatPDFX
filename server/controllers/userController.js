@@ -143,10 +143,38 @@ export const sendForgoPasswordOTPEmailController = async (req, res) => {
 
     res.status(200).json({ message: "Email sent" });
   } catch (error) {
-    console.log("error is ", error);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
     res.status(500).json({ message: "Error sending email" });
+  }
+};
+
+export const verifyOTPController = async (req, res) => {
+  const { username, otp } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+
+    if (
+      hashedOtp !== user.resetPasswordToken ||
+      Date.now() > user.resetPasswordExpire
+    ) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    user.isOtpVerified = true;
+    await user.save();
+
+    res.status(200).json({ message: "OTP verified" });
+  } catch (error) {
+    res.status(500).json({ message: "Error verifying OTP" });
   }
 };
