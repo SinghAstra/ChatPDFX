@@ -2,6 +2,7 @@ import express from "express";
 import {
   loginUserController,
   registerUserController,
+  resetPasswordController,
   sendForgoPasswordOTPEmailController,
   verifyOTPController,
 } from "../controllers/userController.js";
@@ -13,7 +14,7 @@ router.post("/register", registerUserController);
 router.post("/login", loginUserController);
 router.post("/forgotPassword", sendForgoPasswordOTPEmailController);
 router.post("/verifyOTP", verifyOTPController);
-// router.post("/resetPassword", resetPasswordController);
+router.post("/resetPassword", resetPasswordController);
 
 // router.get("/", authMiddleware, tokenVerificationController);
 // router.get("/:userName", fetchUserController);
