@@ -5,7 +5,7 @@ import {
   createBrowserRouter,
   createRoutesFromChildren,
 } from "react-router-dom";
-import Home from "./components/Home";
+import Home from "./components/Home/Home";
 import Login from "./components/Login/Login";
 import NotFound from "./components/NotFound";
 import PrivateRoute from "./components/PrivateRoute";

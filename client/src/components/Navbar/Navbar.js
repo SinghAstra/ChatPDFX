@@ -1,52 +1,19 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Link, useLocation } from "react-router-dom";
-import { logOut } from "../../actions/auth";
-import { jwtDecode } from "jwt-decode";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React from "react";
+import { Link } from "react-router-dom";
+import "./Navbar.css";
 
 const Navbar = () => {
-  const location = useLocation();
-  const user = useSelector((state) => state.auth.user);
-
-  const dispatch = useDispatch();
-
-  // Effect to check and handle user token expiration
-  useEffect(() => {
-    const token = user?.token;
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      if (decodedToken.exp * 1000 < new Date().getTime()) {
-        dispatch(logOut());
-      }
-    }
-  }, [dispatch, location, user?.token]);
-
-  const isSignUpPage = location.pathname === "/sign-up";
-  const buttonText = isSignUpPage ? "Log In" : "Sign Up";
-  const buttonUrl = isSignUpPage ? "/log-in" : "/sign-up";
-
   return (
-    <div className="flex font-mono justify-between items-center py-4 px-6 shadow-lg bg-black text-white w-full z-10">
-      <div>
-        <h1 className="text-2xl text-blue-400  font-semibold">
-          <Link to={"/"}>Social Media Web App</Link>
-        </h1>
-      </div>
-      <div>
-        {user ? (
-          <Link className="avatar placeholder" to="/profile">
-            <div className="bg-neutral text-neutral-content rounded-full w-12 border-2 border-blue-400">
-              <span className="text-2xl">{user.name[0]}</span>
-            </div>
-          </Link>
-        ) : (
-          <Link
-            className="bg-black rounded-2xl py-2 px-4 border bottom-2 border-blue-400 hover:bg-blue-400 hover:text-black"
-            to={buttonUrl}
-          >
-            {buttonText}
-          </Link>
-        )}
+    <div className="navbar-container">
+      <Link to={"/"}>
+        <h1>Social</h1>
+      </Link>
+      <div className="navbar-links-container">
+        <Link to={"/profile"} className="navbar-link">
+          <FontAwesomeIcon icon={faUser} className="icon" />
+        </Link>
       </div>
     </div>
   );
