@@ -1,14 +1,11 @@
 import bcrypt from "bcrypt";
+import { v2 as cloudinary } from "cloudinary";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 export const registerUserController = async (req, res) => {
   const { username, password, email } = req.body;
   let profile;
-
-  if (req.file.path) {
-    profile = req.file.path;
-  }
 
   const validateEmail = (email) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,6 +58,33 @@ export const registerUserController = async (req, res) => {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const options = {
+      use_filename: true,
+      unique_filename: false,
+      overwrite: true,
+    };
+
+    const uploadProfileImage = () => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          options,
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result.secure_url);
+            }
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+    };
+
+    let profile;
+    if (req.file) {
+      profile = await uploadProfileImage();
+    }
+
     // Create a new user
     const newUser = new User({
       username,
@@ -69,7 +93,6 @@ export const registerUserController = async (req, res) => {
       email,
     });
 
-    // Save the user to the database
     await newUser.save();
 
     const token = jwt.sign(
@@ -80,8 +103,7 @@ export const registerUserController = async (req, res) => {
       }
     );
 
-    // Return a success response
-    res.status(201).json({ message: "Registered Successfully.", token });
+    return res.status(200).json({ message: "Registered Successfully.", token });
   } catch (error) {
     res.status(500).json({ message: "Error while Registering User." });
   }
