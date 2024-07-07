@@ -3,7 +3,23 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 export const registerUserController = async (req, res) => {
-  const { username, password, profile, email } = req.body;
+  const { username, password, email } = req.body;
+  let profile;
+
+  if (req.file.path) {
+    profile = req.file.path;
+  }
+
+  const validateEmail = (email) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(String(email).toLowerCase());
+  };
+
+  const validatePassword = (password) => {
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
 
   // Validate input fields
   if (!username || !password || !email) {
@@ -65,7 +81,7 @@ export const registerUserController = async (req, res) => {
     );
 
     // Return a success response
-    res.status(201).json({ message: "User registered successfully.", token });
+    res.status(201).json({ message: "Registered Successfully.", token });
   } catch (error) {
     res.status(500).json({ message: "Error while Registering User." });
   }
