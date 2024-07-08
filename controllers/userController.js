@@ -144,8 +144,6 @@ export const loginUserController = async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    console.log("token is ", token);
-
     res.json({ message: "Login successful", token });
   } catch (error) {
     console.log("error is ", error);
@@ -280,5 +278,38 @@ export const verifyOTPController = async (req, res) => {
     res.status(200).json({ message: "OTP verified" });
   } catch (error) {
     res.status(500).json({ message: "Error verifying OTP" });
+  }
+};
+
+export const resetPasswordController = async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  try {
+    if (!email || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Email and new password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.isOtpVerified) {
+      return res.status(400).json({ message: "OTP not verified" });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Clear the OTP verification flag
+    user.isOtpVerified = false;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Error resetting password" });
   }
 };
