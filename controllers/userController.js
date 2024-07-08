@@ -5,7 +5,6 @@ import User from "../models/User.js";
 
 export const registerUserController = async (req, res) => {
   const { username, password, email } = req.body;
-  let profile;
 
   const validateEmail = (email) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -106,5 +105,59 @@ export const registerUserController = async (req, res) => {
     return res.status(200).json({ message: "Registered Successfully.", token });
   } catch (error) {
     res.status(500).json({ message: "Error while Registering User." });
+  }
+};
+
+export const loginUserController = async (req, res) => {
+  const { email, password } = req.body;
+
+  // Check for missing credentials
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  try {
+    // Check if user exists in the database
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Compare password using bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Incorrect password" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    console.log("token is ", token);
+
+    res.json({ message: "Login successful", username: user.username, token });
+  } catch (error) {
+    res.status(500).json({ message: "Error while Logging in user." });
+  }
+};
+
+export const fetchUserInfoUsingEmail = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  try {
+    const user = await User.findOne({ email }).select("username profile email");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user information" });
   }
 };
