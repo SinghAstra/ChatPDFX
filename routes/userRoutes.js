@@ -6,6 +6,7 @@ import {
   loginUserController,
   registerUserController,
   sendOTPController,
+  verifyOTPController,
 } from "../controllers/userController.js";
 import authMiddleware from "../middleware/auth.js";
 import User from "../models/User.js";
@@ -17,6 +18,7 @@ router.post("/login", loginUserController);
 router.post("/fetch-user-info", fetchUserInfoUsingEmail);
 router.post("/verify-token", authMiddleware, fetchUserInfoUsingJWTToken);
 router.post("/sendOTP", sendOTPController);
+router.post("/verifyOTP", verifyOTPController);
 
 router.get("/testing", async (req, res) => {
   const users = await User.find();
