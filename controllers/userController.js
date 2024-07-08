@@ -1,7 +1,15 @@
 import bcrypt from "bcrypt";
 import { v2 as cloudinary } from "cloudinary";
+import crypto from "crypto";
+import fs from "fs";
 import jwt from "jsonwebtoken";
+import path from "path";
+import { fileURLToPath } from "url";
+import userAgentParser from "user-agent-parser";
 import User from "../models/User.js";
+import sendEmail from "../utils/sendEmail.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const registerUserController = async (req, res) => {
   const { username, password, email } = req.body;
@@ -182,5 +190,61 @@ export const fetchUserInfoUsingJWTToken = async (req, res) => {
     res.json({ user, message: "User Info fetched" });
   } catch (error) {
     res.status(500).json({ message: "Error while fetching user Info." });
+  }
+};
+
+export const sendOTPController = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const user = await User.findOne({ email });
+  try {
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(otp)
+      .digest("hex");
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    const userAgentString = req.headers["user-agent"];
+    const parsedUserAgent = userAgentParser(userAgentString);
+
+    const browser =
+      parsedUserAgent.browser.name + " " + parsedUserAgent.browser.version;
+    const os = parsedUserAgent.os.name + " " + parsedUserAgent.os.version;
+
+    const templatePath = path.resolve(
+      __dirname,
+      "../email-templates/resetPassword.html"
+    );
+    let html = fs.readFileSync(templatePath, "utf8");
+
+    html = html.replace(/{{username}}/g, user.username);
+    html = html.replace(/{{OTP}}/g, otp);
+    html = html.replace(/{{operatingSystem}}/g, os);
+    html = html.replace(/{{browser}}/g, browser);
+
+    // Send email
+    await sendEmail({
+      email: user.email,
+      subject: "Password Reset Request",
+      html: html,
+    });
+
+    res.status(200).json({ message: "Email sent" });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+    res.status(500).json({ message: "Error sending email" });
   }
 };
