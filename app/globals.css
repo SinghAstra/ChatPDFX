@@ -42,6 +42,7 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
+  color: white;
 }
 
 .no-scrollbar::-webkit-scrollbar {
