@@ -1,0 +1,75 @@
+name: 📈 Improvement Suggestion
+description: "Propose an enhancement to an existing feature"
+title: "📈 Improvement: "
+labels: [improvement]
+body:
+  - type: textarea
+    id: current-situation
+    validations:
+      required: true
+    attributes:
+      label: "🔍 Current Functionality"
+      description: "Describe the existing feature or process"
+      placeholder: "Currently, the [feature] works by..."
+
+  - type: textarea
+    id: limitation
+    validations:
+      required: true
+    attributes:
+      label: "🚧 Current Limitations"
+      description: "What specific issues or inefficiencies exist?"
+      placeholder: "The current implementation struggles with..."
+
+  - type: textarea
+    id: proposed-improvement
+    validations:
+      required: true
+    attributes:
+      label: "🚀 Proposed Enhancement"
+      description: "How could this be improved?"
+      placeholder: "To address these limitations, we could..."
+
+  - type: textarea
+    id: expected-benefits
+    validations:
+      required: true
+    attributes:
+      label: "✨ Potential Benefits"
+      description: "What improvements would this bring?"
+      placeholder: "This enhancement would:
+- Improve performance by...
+- Enhance user experience through...
+- Solve current pain points like..."
+
+  - type: textarea
+    id: implementation-hints
+    validations:
+      required: false
+    attributes:
+      label: "💡 Implementation Suggestions"
+      description: "Any technical insights or implementation ideas"
+      placeholder: "Potential approaches could include:
+- Refactoring...
+- Adding a new method...
+- Optimizing..."
+
+  - type: checkboxes
+    id: prior-checks
+    attributes:
+      label: "🕵️ Pre-Submission Verification"
+      options:
+        - label: "I've checked this is a genuine improvement suggestion"
+          required: true
+        - label: "This is not addressing a bug or requesting a new feature"
+          required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: "🤝 Contribution Interest"
+      description: "Would you like to help implement this improvement?"
+      options:
+        - "I'm interested in helping"
+        - "Looking for guidance"
+        - "Just sharing an idea"
