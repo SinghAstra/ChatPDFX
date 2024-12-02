@@ -1,0 +1,75 @@
+name: 🚀 Feature Request
+description: "Propose a new feature"
+title: "🚀 Feature: "
+labels: [feature]
+body:
+  - type: textarea
+    id: feature-description
+    validations:
+      required: true
+    attributes:
+      label: "📝 Feature Overview"
+      description: "Describe the feature concisely"
+      placeholder: "A new feature that allows users to..."
+
+  - type: textarea
+    id: user-problem
+    validations:
+      required: true
+    attributes:
+      label: "🎯 Problem to Solve"
+      description: "What user problem or pain point does this feature address?"
+      placeholder: "Current users struggle with... This feature would help by..."
+
+  - type: textarea
+    id: proposed-solution
+    validations:
+      required: true
+    attributes:
+      label: "💡 Proposed Solution"
+      description: "Outline the proposed implementation"
+      placeholder: "Implement a [feature type] that enables users to..."
+
+  - type: textarea
+    id: user-flow
+    validations:
+      required: true
+    attributes:
+      label: "🚶 User Journey"
+      description: "Describe the step-by-step user interaction"
+      placeholder: "1. User navigates to...
+2. User clicks/selects...
+3. System responds by...
+4. User achieves desired outcome..."
+
+  - type: textarea
+    id: ui-mockup
+    validations:
+      required: false
+    attributes:
+      label: "🖼️ UI Concept (Optional)"
+      description: "Describe or sketch out potential UI elements"
+      placeholder: "The feature would include:
+- A button in [location]
+- A modal/popup with...
+- Interaction would look like..."
+
+  - type: checkboxes
+    id: prior-research
+    attributes:
+      label: "🕵️ Pre-Submission Checks"
+      options:
+        - label: "I've checked for existing similar feature requests"
+          required: true
+        - label: "I understand this is a feature request, not a bug report"
+          required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: "🤝 Contribution Interest"
+      description: "Would you like to help implement this feature?"
+      options:
+        - "I'm interested in submitting a PR"
+        - "Looking for guidance"
+        - "Just submitting the idea"
