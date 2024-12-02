@@ -1,0 +1,102 @@
+name: "🐛 Bug Report"
+description: "Submit a clear and helpful bug report"
+title: "🐛 Bug Report: "
+labels: ["type: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping us improve by reporting this bug! 🙏
+
+  - type: textarea
+    id: unexpected-behavior
+    validations:
+      required: true
+    attributes:
+      label: "🔍 What Happened (Unexpected Behavior)"
+      description: "Describe the specific issue you encountered."
+      placeholder: "When I [do something], the application [unexpected result]"
+
+  - type: textarea
+    id: expected-behavior
+    validations:
+      required: true
+    attributes:
+      label: "✅ What Should Have Happened"
+      description: "Explain what you expected to occur instead."
+      placeholder: "I expected the application to [correct behavior]"
+
+  - type: textarea
+    id: steps-to-reproduce
+    validations:
+      required: true
+    attributes:
+      label: "🔄 Steps to Reproduce"
+      description: "Provide detailed steps to trigger the bug."
+      placeholder: "1. Navigate to...
+2. Click on...
+3. Observe the unexpected behavior"
+
+  - type: textarea
+    id: error-messages
+    validations:
+      required: false
+    attributes:
+      label: "❗ Error Messages or Logs"
+      description: "Include any error messages, console logs, or stack traces."
+      placeholder: "Paste any relevant error messages or logs here"
+
+  - type: dropdown
+    id: environment
+    validations:
+      required: true
+    attributes:
+      label: "💻 Environment"
+      description: "Select your operating system and browser"
+      multiple: true
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Other
+
+  - type: input
+    id: version-info
+    validations:
+      required: false
+    attributes:
+      label: "🏷️ Version Information"
+      description: "Provide relevant version details (e.g., npm, node, app version)"
+      placeholder: "npm: 8.5.0, node: 16.14.2, App version: 1.2.3"
+
+  - type: textarea
+    id: additional-context
+    validations:
+      required: false
+    attributes:
+      label: "📝 Additional Context"
+      description: "Any other information that might help diagnose the issue"
+      placeholder: "Additional details, screenshots, or relevant context"
+
+  - type: checkboxes
+    id: preliminary-checks
+    attributes:
+      label: "✔️ Pre-Submission Checklist"
+      options:
+        - label: "I have searched existing issues and confirmed this is a new bug"
+          required: true
+        - label: "I have read the project's Contributing Guidelines"
+          required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: "🤝 Contribution Interest"
+      description: "Would you like to help resolve this issue?"
+      options:
+        - "I'm interested in submitting a fix"
+        - "I can provide more information if needed"
+        - "I'm just reporting the bug"
