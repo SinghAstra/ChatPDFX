@@ -1,20 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
-interface AnimationContainerProps {
-  children: React.ReactNode;
+interface FadeSlideInProps {
+  children: ReactNode;
   delay?: number;
   reverse?: boolean;
   className?: string;
 }
 
-const AnimationContainer = ({
+const FadeSlideIn = ({
   children,
   className,
   reverse,
   delay,
-}: AnimationContainerProps) => {
+}: FadeSlideInProps) => {
   return (
     <motion.div
       className={className}
@@ -23,7 +24,7 @@ const AnimationContainer = ({
       viewport={{ once: false }}
       transition={{
         duration: 0.2,
-        delay: delay,
+        delay,
         ease: "easeInOut",
         type: "spring",
         stiffness: 260,
@@ -35,4 +36,4 @@ const AnimationContainer = ({
   );
 };
 
-export default AnimationContainer;
+export default FadeSlideIn;
