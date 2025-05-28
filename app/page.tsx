@@ -1,34 +1,22 @@
-"use client";
-import { Button } from "@/components/ui/button";
-import { Loader } from "lucide-react";
-import { useState } from "react";
+import { Node } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
-export default function PDFParserClient() {
-  const [status, setStatus] = useState("idle");
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleClick = async () => {
-    setStatus("Uploading & Parsing...");
-    setIsUploading(true);
-    const res = await fetch("/api/parse-pdf");
-    setIsUploading(false);
-    const data = await res.json();
-    setStatus(data.status === "completed" ? "✅ Done!" : "❌ Failed.");
-    console.log("Final Result:", data);
-  };
+export default async function HomePage() {
+  const chunks: Node[] = await prisma.node.findMany({
+    orderBy: { chunkIndex: "asc" },
+  });
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-2">
-      <Button onClick={handleClick} disabled={isUploading}>
-        {isUploading ? (
-          <>
-            <Loader className="w-2 h-2 animate-spin" /> Wait
-          </>
-        ) : (
-          "Start Parsing PDF"
-        )}
-      </Button>
-      <p>Status: {status}</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      {chunks.map((chunk) => (
+        <div key={chunk.id} className="p-4 border rounded mb-2">
+          <h3 className="font-bold">Chunk {chunk.chunkIndex + 1}</h3>
+          <p>{chunk.text}</p>
+          <small className="text-gray-500">
+            Start: {chunk.startChar}, End: {chunk.endChar}
+          </small>
+        </div>
+      ))}
     </div>
   );
 }

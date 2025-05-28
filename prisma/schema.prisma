@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+   provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Node {
+  id         String   @id @default(uuid())
+  text       String
+  chunkIndex Int
+  startChar  Int
+  endChar    Int
+  embedding  Float[]  @default([]) 
+  createdAt  DateTime @default(now()) 
+}
