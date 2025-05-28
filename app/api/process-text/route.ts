@@ -1,4 +1,5 @@
 import { data } from "@/lib/constants";
+import { Node } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { chunkTextWithMetadata } from "@/lib/utils";
 import { GoogleGenAI } from "@google/genai";
@@ -14,37 +15,42 @@ if (!GEMINI_API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let requestCount = 0;
+let lastResetTime = Date.now();
+const REQUEST_LIMIT = 15;
+async function handleRequestExceeded() {
+  requestCount = 16;
+  await handleRateLimit();
+}
 
-export async function checkLimits() {
-  const geminiRequestsCountKey = getGeminiRequestsThisMinuteRedisKey();
+function checkLimits() {
+  const now = Date.now();
 
-  const [requests, tokens] = await redisClient.mget(
-    geminiRequestsCountKey,
-    geminiRequestsTokenConsumedKey
-  );
+  // Reset count every 60 seconds
+  if (now - lastResetTime >= 60_000) {
+    requestCount = 0;
+    lastResetTime = now;
+  }
 
   return {
-    requests: parseInt(requests ?? "0"),
-    tokens: parseInt(tokens ?? "0"),
-    requestsExceeded: parseInt(requests ?? "0") >= REQUEST_LIMIT,
-    tokensExceeded: parseInt(tokens ?? "0") >= TOKEN_LIMIT,
+    requests: requestCount,
+    requestsExceeded: requestCount >= REQUEST_LIMIT,
   };
 }
 
-export async function handleRateLimit() {
-  const limitsResponse = await checkLimits();
+function trackRequest() {
+  requestCount++;
+}
 
-  console.log("--------------------------------------");
-  console.log("limitsResponse:", limitsResponse);
-  console.log("--------------------------------------");
+async function handleRateLimit() {
+  const limitsResponse = checkLimits();
 
-  const { requestsExceeded, tokensExceeded } = limitsResponse;
-
-  if (requestsExceeded || tokensExceeded) {
+  if (limitsResponse.requestsExceeded) {
+    console.log("Rate limit exceeded, sleeping...");
     await sleep(1);
   }
 
-  await trackRequest(tokenCount);
+  trackRequest();
 }
 
 async function generateEmbedding(text: string) {
@@ -52,110 +58,94 @@ async function generateEmbedding(text: string) {
     try {
       await handleRateLimit();
 
-      const res = await ai.models.embedContent({
+      const response = await ai.models.embedContent({
         model: "gemini-embedding-exp-03-07",
-        contents: chunk.text,
+        contents: text,
       });
-      return ai.embeddings.create({
-        model: "gemini-1.5-flash",
-        input: text,
-      });
+
+      if (!response.embeddings || !response.embeddings.values) {
+        throw new Error(
+          "GoogleGenerativeAI Error : No embeddings returned from the API"
+        );
+      }
+
+      return response.embeddings[0].values;
     } catch (error) {
-      console.error("Error generating embedding:", error);
-      sleep(i + 1);
+      if (error instanceof Error) {
+        console.log("--------------------------------");
+        console.log("error.stack is ", error.stack);
+        console.log("error.message is ", error.message);
+        console.log("--------------------------------");
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.includes("GoogleGenerativeAI Error")
+      ) {
+        console.log(`Trying again for ${i + 1} time --generateEmbedding`);
+        await handleRequestExceeded();
+        sleep(i + 1);
+        continue;
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.includes("429 Too Many Requests")
+      ) {
+        console.log(`Trying again for ${i + 1} time --generateEmbedding`);
+        await handleRequestExceeded();
+        sleep(i + 1);
+        continue;
+      }
+
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Unexpected error occurred while generating embedding."
+      );
     }
   }
+
+  throw new Error("Failed to generate embedding after multiple attempts");
 }
 
 export async function GET() {
   const chunks = chunkTextWithMetadata(data);
 
-  const formatted = chunks.map((chunk) => {
-    const embedding = generateEmbedding(chunk.text);
-    return {
-      id: chunk.id,
-      text: chunk.text,
-      chunkIndex: chunk.metadata.chunk_index,
-      startChar: chunk.metadata.start_char,
-      endChar: chunk.metadata.end_char,
-      embedding: embedding,
-    };
-  });
+  const embedding = generateEmbedding(chunks[0].text);
+
+  console.log("embedding is ", embedding);
+
+  const formatted: Node[] = await Promise.all(
+    chunks.map((chunk) => {
+      return {
+        id: chunk.id,
+        text: chunk.text,
+        chunkIndex: chunk.metadata.chunk_index,
+        startChar: chunk.metadata.start_char,
+        endChar: chunk.metadata.end_char,
+        embedding: [],
+        createdAt: new Date(),
+      };
+    })
+  );
+
+  for (let i = 0; i < formatted.length; i++) {
+    const chunk = formatted[i];
+    try {
+      const embedding = await generateEmbedding(chunk.text);
+
+      if (!embedding || embedding.length === 0) {
+        throw new Error("Empty embedding returned from the API");
+      }
+      chunk.embedding = embedding;
+    } catch (error) {
+      console.error(`Error generating embedding for chunk ${chunk.id}:`, error);
+      chunk.embedding = [];
+    }
+  }
 
   await prisma.node.createMany({ data: formatted });
 
   return Response.json({ success: true, count: formatted.length });
 }
-
-// import { data } from "@/lib/constants";
-// import { prisma } from "@/lib/prisma";
-// import { chunkTextWithMetadata } from "@/lib/utils";
-// import { GoogleGenAI } from "@google/genai";
-// import { handleRateLimit, handleRequestExceeded } from "@/lib/rate-limit"; // Make sure these are imported
-// import { estimateTokenCount } from "@/lib/tokens"; // Assuming you have a function like this
-
-// function sleep(times: number) {
-//   return new Promise((resolve) => setTimeout(resolve, 2000 * times));
-// }
-
-// const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-
-// export async function GET() {
-//   const chunks = chunkTextWithMetadata(data);
-
-//   for (let i = 0; i < chunks.length; i++) {
-//     const chunk = chunks[i];
-
-//     try {
-//       const tokenCount = await estimateTokenCount(chunk.text);
-//       await handleRateLimit(tokenCount);
-
-//       const res = await ai.models.embedContent({
-//         model: "gemini-embedding-exp-03-07",
-//         contents: chunk.text,
-//       });
-
-//       const embedding = res.embeddings?.values;
-
-//       if (!embedding) throw new Error("No embedding returned");
-
-//       await prisma.node.create({
-//         data: {
-//           id: chunk.id,
-//           text: chunk.text,
-//           chunkIndex: chunk.metadata.chunk_index,
-//           startChar: chunk.metadata.start_char,
-//           endChar: chunk.metadata.end_char,
-//           embedding,
-//         },
-//       });
-//     } catch (error) {
-//       const message =
-//         error instanceof Error ? error.message : "Unknown error";
-
-//       console.log(`Error on chunk ${i}:`, message);
-
-//       if (
-//         message.includes("429") ||
-//         message.includes("GoogleGenerativeAI")
-//       ) {
-//         await handleRequestExceeded();
-//         await sleep(i + 1);
-//         continue;
-//       }
-
-//       if (
-//         message.includes("Invalid") ||
-//         message.includes("SyntaxError")
-//       ) {
-//         console.log("Retrying due to invalid format or syntax...");
-//         continue;
-//       }
-
-//       // Skip this chunk on other unknown errors
-//       continue;
-//     }
-//   }
-
-//   return Response.json({ success: true, count: chunks.length });
-// }
