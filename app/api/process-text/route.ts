@@ -2,77 +2,33 @@ import { data } from "@/lib/constants";
 import { Node } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { chunkTextWithMetadata } from "@/lib/utils";
-import { GoogleGenAI } from "@google/genai";
+import { Mistral } from "@mistralai/mistralai";
 
 function sleep(times: number) {
   return new Promise((resolve) => setTimeout(resolve, 2000 * times));
 }
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 
-if (!GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY is not set in the environment variables.");
+if (!MISTRAL_API_KEY) {
+  throw new Error("MISTRAL_API_KEY is not set in the environment variables.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-let requestCount = 0;
-let lastResetTime = Date.now();
-const REQUEST_LIMIT = 15;
-async function handleRequestExceeded() {
-  requestCount = 16;
-  await handleRateLimit();
-}
-
-function checkLimits() {
-  const now = Date.now();
-
-  // Reset count every 60 seconds
-  if (now - lastResetTime >= 60_000) {
-    requestCount = 0;
-    lastResetTime = now;
-  }
-
-  return {
-    requests: requestCount,
-    requestsExceeded: requestCount >= REQUEST_LIMIT,
-  };
-}
-
-function trackRequest() {
-  requestCount++;
-}
-
-async function handleRateLimit() {
-  const limitsResponse = checkLimits();
-
-  if (limitsResponse.requestsExceeded) {
-    console.log("Rate limit exceeded, sleeping...");
-    await sleep(1);
-  }
-
-  trackRequest();
-}
+const client = new Mistral({ apiKey: MISTRAL_API_KEY });
 
 async function generateEmbedding(text: string) {
   for (let i = 0; i < 100; i++) {
     try {
-      await handleRateLimit();
-
-      const response = await ai.models.embedContent({
-        model: "gemini-embedding-exp-03-07",
-        contents: text,
+      const embeddingsResponse = await client.embeddings.create({
+        model: "mistral-embed",
+        inputs: [text],
       });
 
-      if (!response.embeddings || !response.embeddings.values) {
-        throw new Error(
-          "GoogleGenerativeAI Error : No embeddings returned from the API"
-        );
-      }
-
-      return response.embeddings[0].values;
+      return embeddingsResponse.data?.[0]?.embedding;
     } catch (error) {
       if (error instanceof Error) {
         console.log("--------------------------------");
+        console.log("text is ", text);
         console.log("error.stack is ", error.stack);
         console.log("error.message is ", error.message);
         console.log("--------------------------------");
@@ -80,22 +36,10 @@ async function generateEmbedding(text: string) {
 
       if (
         error instanceof Error &&
-        error.message.includes("GoogleGenerativeAI Error")
+        error.message.includes("Requests rate limit exceeded")
       ) {
-        console.log(`Trying again for ${i + 1} time --generateEmbedding`);
-        await handleRequestExceeded();
-        sleep(i + 1);
-        continue;
-      }
-
-      if (
-        error instanceof Error &&
-        error.message.includes("429 Too Many Requests")
-      ) {
-        console.log(`Trying again for ${i + 1} time --generateEmbedding`);
-        await handleRequestExceeded();
-        sleep(i + 1);
-        continue;
+        sleep(1);
+        continue; // Retry after a short delay if rate limit exceeded
       }
 
       throw new Error(
@@ -111,10 +55,6 @@ async function generateEmbedding(text: string) {
 
 export async function GET() {
   const chunks = chunkTextWithMetadata(data);
-
-  const embedding = generateEmbedding(chunks[0].text);
-
-  console.log("embedding is ", embedding);
 
   const formatted: Node[] = await Promise.all(
     chunks.map((chunk) => {
@@ -132,16 +72,32 @@ export async function GET() {
 
   for (let i = 0; i < formatted.length; i++) {
     const chunk = formatted[i];
-    try {
-      const embedding = await generateEmbedding(chunk.text);
+    for (let i = 0; i < 100; i++) {
+      try {
+        const embedding = await generateEmbedding(chunk.text);
 
-      if (!embedding || embedding.length === 0) {
-        throw new Error("Empty embedding returned from the API");
+        if (!embedding || embedding.length === 0) {
+          throw new Error("Empty embedding returned from the API");
+        }
+        console.log("embedding generated  with length: ", embedding.length);
+        chunk.embedding = embedding;
+
+        await sleep(1);
+        break;
+      } catch (error) {
+        if (error instanceof Error) {
+          console.log("--------------------------------");
+          console.log("error.stack is ", error.stack);
+          console.log("error.message is ", error.message);
+          console.log("--------------------------------");
+        }
+
+        throw new Error(
+          error instanceof Error
+            ? error.message
+            : "Unexpected error occurred while generating embedding."
+        );
       }
-      chunk.embedding = embedding;
-    } catch (error) {
-      console.error(`Error generating embedding for chunk ${chunk.id}:`, error);
-      chunk.embedding = [];
     }
   }
 
