@@ -1,15 +1,22 @@
 import { data } from "@/lib/constants";
-import { ChunkNode } from "@/lib/generated/prisma";
+import { ChunkNode, SummaryNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { chunkTextWithMetadata } from "@/lib/utils";
+import { GoogleGenAI } from "@google/genai";
 import { Mistral } from "@mistralai/mistralai";
 import keyword_extractor from "keyword-extractor";
 
-const SystemMessage = {
-  role: "system" as const,
-  content:
-    "You are an expert summarizer. Summarize the following content clearly and concisely in 1-2 sentences. Capture the main ideas.",
-};
+const generateSummarySystemPrompt =
+  "You are an expert summarizer. Summarize the following content clearly and concisely in 1-2 sentences. Capture the main ideas. Summary Should be plain text without any formatting. Do not include any code blocks or markdown formatting.";
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const model = "gemini-1.5-flash";
+
+if (!GEMINI_API_KEY) {
+  throw new Error("Missing GEMINI_API_KEY environment variable.");
+}
+
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 function sleep(times: number) {
   return new Promise((resolve) => setTimeout(resolve, 2000 * times));
@@ -21,7 +28,7 @@ if (!MISTRAL_API_KEY) {
   throw new Error("MISTRAL_API_KEY is not set in the environment variables.");
 }
 
-const client = new Mistral({ apiKey: MISTRAL_API_KEY });
+const mistralClient = new Mistral({ apiKey: MISTRAL_API_KEY });
 
 function extractKeywords(text: string): string[] {
   const keywords = keyword_extractor.extract(text, {
@@ -34,30 +41,103 @@ function extractKeywords(text: string): string[] {
   return keywords;
 }
 
-async function summarizeNodes(texts: string[]): Promise<string> {
+export async function generateSummary(texts: string[]) {
   const prompt = texts.map((t, i) => `Chunk ${i + 1}:\n${t}`).join("\n\n");
+  for (let i = 0; i < 100; i++) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          temperature: 0.1,
+          systemInstruction: generateSummarySystemPrompt,
+        },
+      });
 
-  const res = await client.chat.complete({
-    model: "mistral-large-latest",
-    messages: [SystemMessage, { role: "user", content: prompt }],
-  });
+      if (!response || !response.text) {
+        throw new Error("Invalid Summary format");
+      }
+      const summary = response.text;
 
-  const responseMessage = res.choices?.[0]?.message?.content;
+      console.log("summary is ", summary);
 
-  console.log("Response from Mistral:", responseMessage);
+      return summary;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log("--------------------------------");
+        console.log("error.stack is ", error.stack);
+        console.log("error.message is ", error.message);
+        console.log("--------------------------------");
+      }
 
-  if (typeof responseMessage === "string") {
-    // If the response is a string, return it directly
-    return responseMessage;
+      if (
+        error instanceof Error &&
+        error.message.includes("GoogleGenerativeAI Error")
+      ) {
+        console.log(`Trying again for ${i + 1} time --generateSummary`);
+        sleep(i + 1);
+        continue;
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.includes("429 Too Many Requests")
+      ) {
+        console.log(`Trying again for ${i + 1} time --generateSummary`);
+        sleep(i + 1);
+        continue;
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.includes("Invalid Summary format")
+      ) {
+        console.log(`Trying again for ${i + 1} time --generateSummary`);
+        sleep(i + 1);
+        continue;
+      }
+      continue;
+    }
+  }
+  return "Could Not generate Summary.";
+}
+
+async function buildSummaryTree(nodes: SummaryNode[], currentLevel = 0) {
+  if (nodes.length <= 1) return;
+
+  const parentNodes: SummaryNode[] = [];
+
+  for (let i = 0; i < nodes.length; i += 5) {
+    const group = nodes.slice(i, i + 5);
+    const summary = await generateSummary(group.map((n) => n.summary));
+    console.log("currentLevel is ", currentLevel);
+
+    const parentNode = await prisma.summaryNode.create({
+      data: {
+        summary,
+        level: currentLevel,
+        parentId: null,
+      },
+    });
+
+    parentNodes.push(parentNode);
+
+    // update children with parentId
+    await prisma.summaryNode.updateMany({
+      where: { id: { in: group.map((n) => n.id) } },
+      data: { parentId: parentNode.id },
+    });
+
+    await sleep(1); // throttle
   }
 
-  return "Failed to summarize the text.";
+  await buildSummaryTree(parentNodes, currentLevel + 1);
 }
 
 async function generateEmbedding(text: string) {
   for (let i = 0; i < 100; i++) {
     try {
-      const embeddingsResponse = await client.embeddings.create({
+      const embeddingsResponse = await mistralClient.embeddings.create({
         model: "mistral-embed",
         inputs: [text],
       });
@@ -80,11 +160,7 @@ async function generateEmbedding(text: string) {
         continue; // Retry after a short delay if rate limit exceeded
       }
 
-      throw new Error(
-        error instanceof Error
-          ? error.message
-          : "Unexpected error occurred while generating embedding."
-      );
+      continue;
     }
   }
 
@@ -92,10 +168,11 @@ async function generateEmbedding(text: string) {
 }
 
 export async function GET() {
-  const chunks = chunkTextWithMetadata(data);
+  try {
+    const chunks = chunkTextWithMetadata(data);
+    const formattedSummaryNodes: SummaryNode[] = [];
 
-  const formatted: ChunkNode[] = await Promise.all(
-    chunks.map((chunk) => {
+    const formattedChunkNodes: ChunkNode[] = chunks.map((chunk) => {
       return {
         id: chunk.id,
         text: chunk.text,
@@ -103,16 +180,15 @@ export async function GET() {
         startChar: chunk.metadata.start_char,
         endChar: chunk.metadata.end_char,
         embedding: [],
+        summaryId: "",
         keywords: extractKeywords(chunk.text),
         createdAt: new Date(),
       };
-    })
-  );
+    });
 
-  for (let i = 0; i < formatted.length; i++) {
-    const chunk = formatted[i];
-    for (let i = 0; i < 100; i++) {
-      try {
+    for (let i = 0; i < formattedChunkNodes.length; i++) {
+      const chunk = formattedChunkNodes[i];
+      for (let i = 0; i < 100; i++) {
         const embedding = await generateEmbedding(chunk.text);
 
         if (!embedding || embedding.length === 0) {
@@ -122,25 +198,41 @@ export async function GET() {
         chunk.embedding = embedding;
 
         await sleep(1);
-        break;
-      } catch (error) {
-        if (error instanceof Error) {
-          console.log("--------------------------------");
-          console.log("error.stack is ", error.stack);
-          console.log("error.message is ", error.message);
-          console.log("--------------------------------");
-        }
+        const summary = await generateSummary([chunk.text]);
+        const summaryNode = await prisma.summaryNode.create({
+          data: {
+            summary,
+            level: 0,
+            parentId: null,
+          },
+        });
 
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Unexpected error occurred while generating embedding."
-        );
+        formattedSummaryNodes.push(summaryNode);
+
+        chunk.summaryId = summaryNode.id;
+
+        await sleep(1);
+
+        break;
       }
     }
+
+    await prisma.chunkNode.createMany({ data: formattedChunkNodes });
+    await buildSummaryTree(formattedSummaryNodes);
+
+    return Response.json({ success: true, count: formattedChunkNodes.length });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log("--------------------------------");
+      console.log("error.stack is ", error.stack);
+      console.log("error.message is ", error.message);
+      console.log("--------------------------------");
+    }
+
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Unexpected error occurred while generating embedding."
+    );
   }
-
-  await prisma.chunkNode.createMany({ data: formatted });
-
-  return Response.json({ success: true, count: formatted.length });
 }
