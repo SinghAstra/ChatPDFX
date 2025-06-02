@@ -1,8 +1,15 @@
 import { data } from "@/lib/constants";
-import { Node } from "@/lib/generated/prisma";
+import { ChunkNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { chunkTextWithMetadata } from "@/lib/utils";
 import { Mistral } from "@mistralai/mistralai";
+import keyword_extractor from "keyword-extractor";
+
+const SystemMessage = {
+  role: "system" as const,
+  content:
+    "You are an expert summarizer. Summarize the following content clearly and concisely in 1-2 sentences. Capture the main ideas.",
+};
 
 function sleep(times: number) {
   return new Promise((resolve) => setTimeout(resolve, 2000 * times));
@@ -15,6 +22,37 @@ if (!MISTRAL_API_KEY) {
 }
 
 const client = new Mistral({ apiKey: MISTRAL_API_KEY });
+
+function extractKeywords(text: string): string[] {
+  const keywords = keyword_extractor.extract(text, {
+    language: "english",
+    remove_digits: true,
+    return_changed_case: true,
+    remove_duplicates: true,
+  });
+
+  return keywords;
+}
+
+async function summarizeNodes(texts: string[]): Promise<string> {
+  const prompt = texts.map((t, i) => `Chunk ${i + 1}:\n${t}`).join("\n\n");
+
+  const res = await client.chat.complete({
+    model: "mistral-large-latest",
+    messages: [SystemMessage, { role: "user", content: prompt }],
+  });
+
+  const responseMessage = res.choices?.[0]?.message?.content;
+
+  console.log("Response from Mistral:", responseMessage);
+
+  if (typeof responseMessage === "string") {
+    // If the response is a string, return it directly
+    return responseMessage;
+  }
+
+  return "Failed to summarize the text.";
+}
 
 async function generateEmbedding(text: string) {
   for (let i = 0; i < 100; i++) {
@@ -56,7 +94,7 @@ async function generateEmbedding(text: string) {
 export async function GET() {
   const chunks = chunkTextWithMetadata(data);
 
-  const formatted: Node[] = await Promise.all(
+  const formatted: ChunkNode[] = await Promise.all(
     chunks.map((chunk) => {
       return {
         id: chunk.id,
@@ -65,6 +103,7 @@ export async function GET() {
         startChar: chunk.metadata.start_char,
         endChar: chunk.metadata.end_char,
         embedding: [],
+        keywords: extractKeywords(chunk.text),
         createdAt: new Date(),
       };
     })
@@ -101,7 +140,7 @@ export async function GET() {
     }
   }
 
-  await prisma.node.createMany({ data: formatted });
+  await prisma.chunkNode.createMany({ data: formatted });
 
   return Response.json({ success: true, count: formatted.length });
 }

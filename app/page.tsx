@@ -1,8 +1,8 @@
-import { Node } from "@/lib/generated/prisma";
+import { ChunkNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 export default async function HomePage() {
-  const chunks: Node[] = await prisma.node.findMany({
+  const chunks: ChunkNode[] = await prisma.chunkNode.findMany({
     orderBy: { chunkIndex: "asc" },
   });
 
@@ -28,9 +28,16 @@ export default async function HomePage() {
               <span className="text-red-400">Not available</span>
             )}
           </p>
-          <small className="text-gray-500">
+          {chunk.keywords.map((keyword, index) => {
+            return (
+              <span key={index} className="inline-block mr-2 text-xs">
+                {keyword}
+              </span>
+            );
+          })}
+          <p className="text-gray-500">
             Start: {chunk.startChar}, End: {chunk.endChar}
-          </small>
+          </p>
         </div>
       ))}
     </div>
