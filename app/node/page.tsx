@@ -1,40 +1,79 @@
-import { NodeTreeViewer } from "@/components/node-tree-viewer";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Suspense } from "react";
+import { TreeNode } from "@/components/tree-node";
+import { ChunkNode, SummaryNode } from "@/lib/generated/prisma";
+import { prisma } from "@/lib/prisma";
 
-export default function NodePage() {
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Node Tree Structure
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Hierarchical view of summary nodes and their associated chunks
+export interface SummaryNodeWithChildren extends SummaryNode {
+  children: SummaryNodeWithChildren[];
+  chunks: ChunkNode[];
+}
+
+async function getNodeTree() {
+  // Step 1: Fetch all summary nodes (flat list)
+  const allNodes = await prisma.summaryNode.findMany({
+    include: {
+      chunks: true,
+    },
+  });
+
+  let nodeWithChunk = 0;
+
+  for (const node of allNodes) {
+    if (node.chunks) {
+      nodeWithChunk++;
+    }
+  }
+
+  console.log("nodeWithChunk is ", nodeWithChunk);
+
+  // Step 2: Create a map of id → node
+  const nodeMap = new Map<string, SummaryNodeWithChildren>();
+
+  // Add a `children` array manually to each node
+  for (const node of allNodes) {
+    nodeMap.set(node.id, { ...node, children: [] });
+  }
+
+  let rootNode: SummaryNodeWithChildren | null = null;
+
+  // Step 3: Link children to parents
+  for (const node of allNodes) {
+    if (node.parentId) {
+      const parent = nodeMap.get(node.parentId);
+      const childNode = nodeMap.get(node.id);
+      if (childNode && parent) {
+        parent.children.push(childNode);
+      }
+    } else {
+      rootNode = nodeMap.get(node.id) ?? null;
+    }
+  }
+
+  console.log("rootNode is ", rootNode);
+
+  return rootNode;
+}
+
+async function NodePage() {
+  const rootNode = await getNodeTree();
+
+  if (!rootNode) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-muted-foreground">
+          <p className="text-lg">No nodes found</p>
+          <p className="text-sm mt-1">
+            Create some summary nodes to see the tree structure
           </p>
-        </header>
-
-        <Suspense fallback={<TreeSkeleton />}>
-          <NodeTreeViewer />
-        </Suspense>
-      </div>
-    </div>
-  );
-}
-
-function TreeSkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-6 w-3/4" />
-          <div className="ml-6 space-y-1">
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
         </div>
-      ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 max-w-3xl mx-auto">
+      <TreeNode node={rootNode} level={0} />
     </div>
   );
 }
+
+export default NodePage;

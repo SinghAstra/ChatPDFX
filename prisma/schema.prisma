@@ -1,35 +1,34 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+  provider        = "prisma-client-js"
+  output          = "../lib/generated/prisma"
+
 }
 
 datasource db {
-   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+ }
 
 model ChunkNode {
-  id         String   @id @default(uuid())
+  id         String       @id @default(uuid())
   text       String
   chunkIndex Int
   startChar  Int
   endChar    Int
-  embedding  Float[]  @default([])
-  keywords   String[] @default([])   
-  createdAt  DateTime @default(now()) 
-
+  embedding   Unsupported("vector")?
+  keywords   String[]     @default([])
+  createdAt  DateTime     @default(now())
   summaryId  String?
   summary    SummaryNode? @relation(fields: [summaryId], references: [id])
 }
 
 model SummaryNode {
-  id        String   @id @default(uuid())
-  summary   String
-  level     Int      
-  parentId  String?
-  parent    SummaryNode? @relation("SummaryHierarchy", fields: [parentId], references: [id])
-  children  SummaryNode[] @relation("SummaryHierarchy")
-  
-  chunks    ChunkNode[]
+  id       String        @id @default(uuid())
+  summary  String
+  level    Int
+  parentId String?
+  chunk   ChunkNode[]
+  parent   SummaryNode?  @relation("SummaryHierarchy", fields: [parentId], references: [id])
+  children SummaryNode[] @relation("SummaryHierarchy")
 }

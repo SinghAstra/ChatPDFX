@@ -1,10 +1,16 @@
 import { ChunkNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
+interface ChunkNodeWithEmbedding extends ChunkNode {
+  embedding: number[];
+}
+
 export default async function HomePage() {
-  const chunks: ChunkNode[] = await prisma.chunkNode.findMany({
-    orderBy: { chunkIndex: "asc" },
-  });
+  const chunks = await prisma.$queryRaw<
+    ChunkNodeWithEmbedding[]
+  >`SELECT id, text, "chunkIndex", "startChar", "endChar", embedding::text as embedding, keywords, "createdAt", "summaryId"
+  FROM "ChunkNode"
+  ORDER BY "chunkIndex" ASC;`;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">

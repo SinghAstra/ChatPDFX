@@ -16,9 +16,9 @@ if (!GEMINI_API_KEY) {
   throw new Error("Missing GEMINI_API_KEY environment variable.");
 }
 
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+const geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-function sleep(times: number) {
+export function sleep(times: number) {
   return new Promise((resolve) => setTimeout(resolve, 2000 * times));
 }
 
@@ -45,7 +45,7 @@ export async function generateSummary(texts: string[]) {
   const prompt = texts.map((t, i) => `Chunk ${i + 1}:\n${t}`).join("\n\n");
   for (let i = 0; i < 100; i++) {
     try {
-      const response = await ai.models.generateContent({
+      const response = await geminiClient.models.generateContent({
         model,
         contents: prompt,
         config: {
@@ -134,7 +134,7 @@ async function buildSummaryTree(nodes: SummaryNode[], currentLevel = 1) {
   await buildSummaryTree(parentNodes, currentLevel + 1);
 }
 
-async function generateEmbedding(text: string) {
+export async function generateEmbedding(text: string) {
   for (let i = 0; i < 100; i++) {
     try {
       const embeddingsResponse = await mistralClient.embeddings.create({
@@ -179,7 +179,6 @@ export async function GET() {
         chunkIndex: chunk.metadata.chunk_index,
         startChar: chunk.metadata.start_char,
         endChar: chunk.metadata.end_char,
-        embedding: [],
         summaryId: "",
         keywords: extractKeywords(chunk.text),
         createdAt: new Date(),
@@ -195,7 +194,6 @@ export async function GET() {
           throw new Error("Empty embedding returned from the API");
         }
         console.log("embedding generated  with length: ", embedding.length);
-        chunk.embedding = embedding;
 
         await sleep(1);
         const summary = await generateSummary([chunk.text]);
@@ -207,6 +205,11 @@ export async function GET() {
           },
         });
 
+        await prisma.$executeRaw`
+        INSERT INTO "ChunkNode" ("id", "text", "chunkIndex", "startChar", "endChar", "embedding","keywords","summaryId")
+        VALUES (${chunk.id}, ${chunk.text}, ${chunk.chunkIndex}, ${chunk.startChar}, ${chunk.endChar}, ${embedding}::vector,${chunk.keywords},${summaryNode.id})
+        `;
+
         formattedSummaryNodes.push(summaryNode);
 
         chunk.summaryId = summaryNode.id;
@@ -217,7 +220,6 @@ export async function GET() {
       }
     }
 
-    await prisma.chunkNode.createMany({ data: formattedChunkNodes });
     await buildSummaryTree(formattedSummaryNodes);
 
     return Response.json({ success: true, count: formattedChunkNodes.length });

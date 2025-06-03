@@ -1,5 +1,6 @@
 "use client";
 
+import { SummaryNodeWithChildren } from "@/app/node/page";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight, FileText, Layers } from "lucide-react";
 import { useState } from "react";
-import { SummaryNodeWithChildren } from "./node-tree-viewer";
 
 interface TreeNodeProps {
   node: SummaryNodeWithChildren;
