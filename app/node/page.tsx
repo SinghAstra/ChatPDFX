@@ -2,7 +2,7 @@ import { NodeTreeViewer } from "@/components/node-tree-viewer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
-export default function HomePage() {
+export default function NodePage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto">

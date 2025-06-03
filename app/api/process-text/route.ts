@@ -102,7 +102,7 @@ export async function generateSummary(texts: string[]) {
   return "Could Not generate Summary.";
 }
 
-async function buildSummaryTree(nodes: SummaryNode[], currentLevel = 0) {
+async function buildSummaryTree(nodes: SummaryNode[], currentLevel = 1) {
   if (nodes.length <= 1) return;
 
   const parentNodes: SummaryNode[] = [];

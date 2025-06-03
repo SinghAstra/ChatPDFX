@@ -1,22 +1,50 @@
+import { ChunkNode, SummaryNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
-// import { TreeNode } from "./tree-node";
+import { TreeNode } from "./tree-node";
+
+export interface SummaryNodeWithChildren extends SummaryNode {
+  children: SummaryNodeWithChildren[];
+  chunks: ChunkNode[];
+}
 
 async function getNodeTree() {
-  const rootNode = await prisma.summaryNode.findFirst({
-    where: { parentId: null },
+  // Step 1: Fetch all summary nodes (flat list)
+  const allNodes = await prisma.summaryNode.findMany({
     include: {
-      children: true,
+      chunks: true,
     },
   });
 
-  if (!rootNode) return [];
-  console.log("rootNode is ", rootNode);
+  // Step 2: Create a map of id → node
+  const nodeMap = new Map<string, SummaryNodeWithChildren>();
+
+  // Add a `children` array manually to each node
+  for (const node of allNodes) {
+    nodeMap.set(node.id, { ...node, children: [] });
+  }
+
+  let rootNode: SummaryNodeWithChildren | null = null;
+
+  // Step 3: Link children to parents
+  for (const node of allNodes) {
+    if (node.parentId) {
+      const parent = nodeMap.get(node.parentId);
+      const childNode = nodeMap.get(node.id);
+      if (childNode && parent) {
+        parent.children.push(childNode);
+      }
+    } else {
+      rootNode = nodeMap.get(node.id) ?? null;
+    }
+  }
+
+  return rootNode;
 }
 
 export async function NodeTreeViewer() {
-  const nodes = await getNodeTree();
+  const rootNode = await getNodeTree();
 
-  if (!nodes || nodes.length === 0) {
+  if (!rootNode) {
     return (
       <div className="text-center py-12">
         <div className="text-muted-foreground">
@@ -31,9 +59,7 @@ export async function NodeTreeViewer() {
 
   return (
     <div className="space-y-2">
-      {/* {nodes.map((node) => (
-        <TreeNode key={node.id} node={node} level={0} />
-      ))} */}
+      <TreeNode node={rootNode} level={0} />
     </div>
   );
 }
