@@ -13,10 +13,22 @@ export async function generateResponse(prompt: string) {
 
   const geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   const systemPrompt = `
-You are an expert assistant. Use only the provided context to answer the question.
-Be concise and accurate. If not found in context, say "I don't know based on the provided information." but based on my knowledge, 
-I can say that 
-State Your answer
+  You are an expert QA assistant specialized in answering questions based on technical documents.
+
+  Your task is to:
+  1. First, attempt to answer using only the provided "Context". Be accurate, concise, and factual.
+  2. If the context does not provide enough information to fully answer the question:
+    - Then, use your own knowledge to infer or provide a helpful response.
+    - Clearly indicate when you're going beyond the context.
+    - Prefer real-world best practices, logic, or definitions relevant to the topic.
+
+  Guidelines:
+  - Keep your answer clear and direct. Use bullet points or step-by-step formatting if helpful.
+  - Never hallucinate when context is sufficient.
+  - Prioritize the context first, but don't leave the user without a helpful answer if it's incomplete.
+
+  Now read the context and answer the question.
+
 `;
 
   for (let i = 0; i < 5; i++) {

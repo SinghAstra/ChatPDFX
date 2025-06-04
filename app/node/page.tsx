@@ -15,16 +15,6 @@ async function getNodeTree() {
     },
   });
 
-  let nodeWithChunk = 0;
-
-  for (const node of allNodes) {
-    if (node.chunks) {
-      nodeWithChunk++;
-    }
-  }
-
-  console.log("nodeWithChunk is ", nodeWithChunk);
-
   // Step 2: Create a map of id → node
   const nodeMap = new Map<string, SummaryNodeWithChildren>();
 
@@ -47,8 +37,6 @@ async function getNodeTree() {
       rootNode = nodeMap.get(node.id) ?? null;
     }
   }
-
-  console.log("rootNode is ", rootNode);
 
   return rootNode;
 }
