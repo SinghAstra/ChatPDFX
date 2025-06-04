@@ -1,7 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
   output          = "../lib/generated/prisma"
-
 }
 
 datasource db {
@@ -28,6 +27,7 @@ model SummaryNode {
   summary  String
   level    Int
   parentId String?
+  embedding   Unsupported("vector")?
   chunk   ChunkNode[]
   parent   SummaryNode?  @relation("SummaryHierarchy", fields: [parentId], references: [id])
   children SummaryNode[] @relation("SummaryHierarchy")

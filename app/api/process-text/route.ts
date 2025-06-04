@@ -1,5 +1,5 @@
 import { data } from "@/lib/constants";
-import { ChunkNode, SummaryNode } from "@/lib/generated/prisma";
+import { ChunkNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { chunkTextWithMetadata } from "@/lib/utils";
 import { GoogleGenAI } from "@google/genai";
@@ -102,36 +102,43 @@ export async function generateSummary(texts: string[]) {
   return "Could Not generate Summary.";
 }
 
-async function buildSummaryTree(nodes: SummaryNode[], currentLevel = 1) {
+async function buildSummaryTree(summaryNodesId: string[], currentLevel = 1) {
+  const nodes = await prisma.summaryNode.findMany({
+    where: { id: { in: summaryNodesId } },
+  });
+
   if (nodes.length <= 1) return;
 
-  const parentNodes: SummaryNode[] = [];
+  const parentNodesId: string[] = [];
 
   for (let i = 0; i < nodes.length; i += 5) {
     const group = nodes.slice(i, i + 5);
     const summary = await generateSummary(group.map((n) => n.summary));
     console.log("currentLevel is ", currentLevel);
 
-    const parentNode = await prisma.summaryNode.create({
-      data: {
-        summary,
-        level: currentLevel,
-        parentId: null,
-      },
-    });
+    const summaryEmbedding = await generateEmbedding(summary);
 
-    parentNodes.push(parentNode);
+    await sleep(1);
+
+    const parentNodeId = crypto.randomUUID();
+
+    await prisma.$executeRaw`
+        INSERT INTO "SummaryNode" ("id","summary", "level", "parentId", "embedding")
+        VALUES (${parentNodeId},${summary}, ${currentLevel}, ${null}, ${summaryEmbedding})
+        `;
+
+    parentNodesId.push(parentNodeId);
 
     // update children with parentId
     await prisma.summaryNode.updateMany({
       where: { id: { in: group.map((n) => n.id) } },
-      data: { parentId: parentNode.id },
+      data: { parentId: parentNodeId },
     });
 
     await sleep(1); // throttle
   }
 
-  await buildSummaryTree(parentNodes, currentLevel + 1);
+  await buildSummaryTree(parentNodesId, currentLevel + 1);
 }
 
 export async function generateEmbedding(text: string) {
@@ -170,7 +177,7 @@ export async function generateEmbedding(text: string) {
 export async function GET() {
   try {
     const chunks = chunkTextWithMetadata(data);
-    const formattedSummaryNodes: SummaryNode[] = [];
+    const summaryNodesId: string[] = [];
 
     const formattedChunkNodes: ChunkNode[] = chunks.map((chunk) => {
       return {
@@ -188,31 +195,42 @@ export async function GET() {
     for (let i = 0; i < formattedChunkNodes.length; i++) {
       const chunk = formattedChunkNodes[i];
       for (let i = 0; i < 100; i++) {
-        const embedding = await generateEmbedding(chunk.text);
+        const chunkTextEmbedding = await generateEmbedding(chunk.text);
 
-        if (!embedding || embedding.length === 0) {
-          throw new Error("Empty embedding returned from the API");
+        if (!chunkTextEmbedding || chunkTextEmbedding.length === 0) {
+          throw new Error("Empty chunkTextEmbedding returned from the API");
         }
-        console.log("embedding generated  with length: ", embedding.length);
+        console.log(
+          "chunkTextEmbedding generated  with length: ",
+          chunkTextEmbedding.length
+        );
 
         await sleep(1);
         const summary = await generateSummary([chunk.text]);
-        const summaryNode = await prisma.summaryNode.create({
-          data: {
-            summary,
-            level: 0,
-            parentId: null,
-          },
-        });
+
+        console.log("summary is ", summary);
+
+        const summaryEmbedding = await generateEmbedding(summary);
+
+        if (!summaryEmbedding || summaryEmbedding.length === 0) {
+          throw new Error("Empty summaryEmbedding returned from the API");
+        }
+
+        await sleep(1);
+
+        const parentNodeId = crypto.randomUUID();
+
+        await prisma.$executeRaw`
+        INSERT INTO "SummaryNode" ("id","summary", "level", "parentId", "embedding")
+        VALUES (${parentNodeId},${summary}, ${0}, ${null}, ${summaryEmbedding})
+        `;
 
         await prisma.$executeRaw`
         INSERT INTO "ChunkNode" ("id", "text", "chunkIndex", "startChar", "endChar", "embedding","keywords","summaryId")
-        VALUES (${chunk.id}, ${chunk.text}, ${chunk.chunkIndex}, ${chunk.startChar}, ${chunk.endChar}, ${embedding}::vector,${chunk.keywords},${summaryNode.id})
+        VALUES (${chunk.id}, ${chunk.text}, ${chunk.chunkIndex}, ${chunk.startChar}, ${chunk.endChar}, ${chunkTextEmbedding}::vector,${chunk.keywords},${parentNodeId})
         `;
 
-        formattedSummaryNodes.push(summaryNode);
-
-        chunk.summaryId = summaryNode.id;
+        summaryNodesId.push(parentNodeId);
 
         await sleep(1);
 
@@ -220,7 +238,7 @@ export async function GET() {
       }
     }
 
-    await buildSummaryTree(formattedSummaryNodes);
+    await buildSummaryTree(summaryNodesId);
 
     return Response.json({ success: true, count: formattedChunkNodes.length });
   } catch (error) {

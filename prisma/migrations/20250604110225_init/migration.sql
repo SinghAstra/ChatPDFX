@@ -19,6 +19,7 @@ CREATE TABLE "SummaryNode" (
     "summary" TEXT NOT NULL,
     "level" INTEGER NOT NULL,
     "parentId" TEXT,
+    "embedding" vector,
 
     CONSTRAINT "SummaryNode_pkey" PRIMARY KEY ("id")
 );
