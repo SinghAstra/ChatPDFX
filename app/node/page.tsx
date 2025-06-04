@@ -4,14 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export interface SummaryNodeWithChildren extends SummaryNode {
   children: SummaryNodeWithChildren[];
-  chunks: ChunkNode[];
+  chunk: ChunkNode[];
 }
 
 async function getNodeTree() {
   // Step 1: Fetch all summary nodes (flat list)
   const allNodes = await prisma.summaryNode.findMany({
     include: {
-      chunks: true,
+      chunk: true,
     },
   });
 

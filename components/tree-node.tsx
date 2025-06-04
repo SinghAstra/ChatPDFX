@@ -20,7 +20,7 @@ export function TreeNode({ node, level }: TreeNodeProps) {
   const [isOpen, setIsOpen] = useState(level < 2);
 
   const hasChildren = node.children && node.children.length > 0;
-  const hasChunks = node.chunks && node.chunks.length > 0;
+  const hasChunks = node.chunk && node.chunk.length > 0;
   const indentClass = level > 0 ? `ml-${Math.min(level * 4, 16)}` : "";
 
   return (
@@ -71,8 +71,8 @@ export function TreeNode({ node, level }: TreeNodeProps) {
                   )}
                   {hasChunks && (
                     <span>
-                      {node.chunks.length} chunk
-                      {node.chunks.length !== 1 ? "s" : ""}
+                      {node.chunk.length} chunk
+                      {node.chunk.length !== 1 ? "s" : ""}
                     </span>
                   )}
                 </div>
@@ -84,7 +84,7 @@ export function TreeNode({ node, level }: TreeNodeProps) {
             {/* Render chunks */}
             {hasChunks && (
               <div className="space-y-2">
-                {node.chunks.map((chunk) => (
+                {node.chunk.map((chunk) => (
                   <div
                     key={chunk.id}
                     className="border-l-4 border-l-green-500 bg-muted/30 p-3"

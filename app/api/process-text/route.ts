@@ -41,6 +41,10 @@ function extractKeywords(text: string): string[] {
   return keywords;
 }
 
+function toPgvectorString(arr: number[]): string {
+  return "[" + arr.join(",") + "]";
+}
+
 export async function generateSummary(texts: string[]) {
   const prompt = texts.map((t, i) => `Chunk ${i + 1}:\n${t}`).join("\n\n");
   for (let i = 0; i < 100; i++) {
@@ -118,13 +122,24 @@ async function buildSummaryTree(summaryNodesId: string[], currentLevel = 1) {
 
     const summaryEmbedding = await generateEmbedding(summary);
 
+    if (!summaryEmbedding || summaryEmbedding.length === 0) {
+      throw new Error("Empty summaryEmbedding returned from the API");
+    }
+
+    console.log(
+      "summaryEmbedding generated  with length: ",
+      summaryEmbedding.length
+    );
+
     await sleep(1);
 
     const parentNodeId = crypto.randomUUID();
 
     await prisma.$executeRaw`
         INSERT INTO "SummaryNode" ("id","summary", "level", "parentId", "embedding")
-        VALUES (${parentNodeId},${summary}, ${currentLevel}, ${null}, ${summaryEmbedding})
+        VALUES (${parentNodeId},${summary}, ${currentLevel}, ${null}, ${toPgvectorString(
+      summaryEmbedding
+    )}::vector)
         `;
 
     parentNodesId.push(parentNodeId);
@@ -208,13 +223,16 @@ export async function GET() {
         await sleep(1);
         const summary = await generateSummary([chunk.text]);
 
-        console.log("summary is ", summary);
-
         const summaryEmbedding = await generateEmbedding(summary);
 
         if (!summaryEmbedding || summaryEmbedding.length === 0) {
           throw new Error("Empty summaryEmbedding returned from the API");
         }
+
+        console.log(
+          "summaryEmbedding generated  with length: ",
+          summaryEmbedding.length
+        );
 
         await sleep(1);
 
@@ -222,12 +240,18 @@ export async function GET() {
 
         await prisma.$executeRaw`
         INSERT INTO "SummaryNode" ("id","summary", "level", "parentId", "embedding")
-        VALUES (${parentNodeId},${summary}, ${0}, ${null}, ${summaryEmbedding})
+        VALUES (${parentNodeId},${summary}, ${0}, ${null}, ${toPgvectorString(
+          summaryEmbedding
+        )}::vector)
         `;
 
         await prisma.$executeRaw`
         INSERT INTO "ChunkNode" ("id", "text", "chunkIndex", "startChar", "endChar", "embedding","keywords","summaryId")
-        VALUES (${chunk.id}, ${chunk.text}, ${chunk.chunkIndex}, ${chunk.startChar}, ${chunk.endChar}, ${chunkTextEmbedding}::vector,${chunk.keywords},${parentNodeId})
+        VALUES (${chunk.id}, ${chunk.text}, ${chunk.chunkIndex}, ${
+          chunk.startChar
+        }, ${chunk.endChar}, ${toPgvectorString(chunkTextEmbedding)}::vector,${
+          chunk.keywords
+        },${parentNodeId})
         `;
 
         summaryNodesId.push(parentNodeId);
