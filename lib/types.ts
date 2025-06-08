@@ -1,3 +1,4 @@
+//  In QueryClassification, is queryType not enough ?
 export interface QueryClassification {
   queryType: "factual" | "broad" | "summary";
   intent:
@@ -8,6 +9,9 @@ export interface QueryClassification {
     | "general_inquiry";
   expectedAnswerType: "paragraph" | "sentence" | "list" | "code_snippet";
 }
+
+// In RetrievalResult, we store the scores from different retrieval methods
+// but will providing id text and combinedScore not be enough
 
 export interface RetrievalResult {
   id: string;
