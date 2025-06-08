@@ -9,10 +9,10 @@ if (!GEMINI_API_KEY) {
 
 const geminiClient = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-async function sleep(times: number) {
-  console.log(`Sleeping for ${2 * times} seconds...`);
-  await new Promise((resolve) => setTimeout(resolve, 2000 * times));
-}
+// async function sleep(times: number) {
+//   console.log(`Sleeping for ${2 * times} seconds...`);
+//   await new Promise((resolve) => setTimeout(resolve, 2000 * times));
+// }
 
 const classificationSystemPrompt = `
 You are a query classification expert. Analyze the user's question and classify it according to these categories:
@@ -72,12 +72,21 @@ export async function classifyQuery(
       throw new Error("TypeError: No response text received");
     }
 
-    const json = JSON.parse(response.text);
-    if (!json.queryType || !json.intent || !json.expectedAnswerType) {
+    const queryClassificationParsedResponse = JSON.parse(response.text);
+    if (
+      !queryClassificationParsedResponse.queryType ||
+      !queryClassificationParsedResponse.intent ||
+      !queryClassificationParsedResponse.expectedAnswerType
+    ) {
       throw new Error("TypeError: Missing or invalid classification fields");
     }
 
-    return json as QueryClassification;
+    console.log(
+      "queryClassificationParsedResponse is ",
+      queryClassificationParsedResponse
+    );
+
+    return queryClassificationParsedResponse as QueryClassification;
   } catch (error) {
     if (error instanceof Error) {
       console.log("error.stack is ", error.stack);

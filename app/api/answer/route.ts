@@ -51,10 +51,11 @@ export async function generateResponse(prompt: string) {
 
 export async function GET() {
   try {
-    const query = "What is operating system?";
+    const query = "What is this text about?";
 
     // Step 1: Classify the query
     const classification = await classifyQuery(query);
+
     console.log("Query classification:", classification);
 
     // Step 2: Retrieve relevant chunks using intelligent retrieval
@@ -85,6 +86,9 @@ export async function GET() {
         totalChunks: retrievedChunks.length,
         chunkScores: retrievedChunks.map((c) => ({
           id: c.id,
+          vectorScore: c.vectorScore,
+          keywordScore: c.keywordScore,
+          summaryScore: c.summaryScore,
           combinedScore: c.combinedScore,
           source: c.source,
         })),
