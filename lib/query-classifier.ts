@@ -53,54 +53,52 @@ export async function classifyQuery(
     propertyOrdering: ["queryType", "intent", "expectedAnswerType"],
   };
 
-  for (let i = 0; i < 100; i++) {
-    try {
-      const response = await geminiClient.models.generateContent({
-        model,
-        contents: `Classify this query: "${query}"`,
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.1,
-          responseSchema,
-          systemInstruction: classificationSystemPrompt,
-        },
-      });
-      if (!response || !response.text) {
-        throw new Error("TypeError: No response text received");
-      }
+  // for (let i = 0; i < 100; i++) {
+  try {
+    const response = await geminiClient.models.generateContent({
+      model,
+      contents: `Classify this query: "${query}"`,
+      config: {
+        responseMimeType: "application/json",
+        temperature: 0.1,
+        responseSchema,
+        systemInstruction: classificationSystemPrompt,
+      },
+    });
 
-      const json = JSON.parse(response.text);
-      if (
-        !json.queryType ||
-        !json.intent ||
-        !json.expectedAnswerType ||
-        typeof json.confidence !== "number"
-      ) {
-        throw new Error("TypeError: Missing or invalid classification fields");
-      }
+    console.log("response.text is ", response.text);
 
-      return json as QueryClassification;
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log("error.stack is ", error.stack);
-        console.log("error.message is ", error.message);
-      }
-
-      if (
-        error instanceof Error &&
-        (error.message.includes("GoogleGenerativeAI Error") ||
-          error.message.includes("429 Too Many Requests") ||
-          error.message.includes("TypeError"))
-      ) {
-        console.log(`Trying again for ${i + 1} time --generateBatchSummaries`);
-        // await handleRequestExceeded();
-        sleep(i + 1);
-        continue;
-      }
-
-      continue;
+    if (!response || !response.text) {
+      throw new Error("TypeError: No response text received");
     }
+
+    const json = JSON.parse(response.text);
+    if (!json.queryType || !json.intent || !json.expectedAnswerType) {
+      throw new Error("TypeError: Missing or invalid classification fields");
+    }
+
+    return json as QueryClassification;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log("error.stack is ", error.stack);
+      console.log("error.message is ", error.message);
+    }
+
+    if (
+      error instanceof Error &&
+      (error.message.includes("GoogleGenerativeAI Error") ||
+        error.message.includes("429 Too Many Requests") ||
+        error.message.includes("TypeError"))
+    ) {
+      // console.log(`Trying again for ${i + 1} time --generateBatchSummaries`);
+      // await handleRequestExceeded();
+      // sleep(i + 1);
+      // continue;
+    }
+
+    // continue;
   }
+  // }
 
   throw new Error("Failed to classify query after retries");
 }

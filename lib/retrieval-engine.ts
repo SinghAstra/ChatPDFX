@@ -197,7 +197,7 @@ async function addSummaryResults(
   }
 }
 
-async function normalizeAndCombineScores(
+function normalizeAndCombineScores(
   results: RetrievalResult[],
   classification: QueryClassification
 ): RetrievalResult[] {
