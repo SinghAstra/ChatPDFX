@@ -1,5 +1,6 @@
 import { ChunkNode } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { classifyQuery } from "@/lib/query-classifier";
 import { GoogleGenAI } from "@google/genai";
 import { generateEmbedding, sleep } from "../process-text/route";
 
@@ -69,9 +70,21 @@ export async function generateResponse(prompt: string) {
 
 export async function GET() {
   try {
-    const question = "What is operating system?";
+    const query = "What is operating system?";
 
-    const embeddedQuery = await generateEmbedding(question);
+    // Step 1: Classify the query
+    const classification = await classifyQuery(query);
+    console.log("Query classification:", classification);
+
+    // Step 2: Retrieve relevant chunks using intelligent retrieval
+    const retrievalEngine = new RetrievalEngine();
+    const retrievedChunks = await retrievalEngine.retrieveChunks(
+      query,
+      classification,
+      8
+    );
+
+    const embeddedQuery = await generateEmbedding(query);
 
     if (!embeddedQuery) {
       throw new Error("Failed to generate embedding for the query.");
